@@ -1,0 +1,13 @@
+{
+  "configurations": {
+    "production": {
+      "appLocation": "./frontend",
+      "apiLocation": "./api",
+      "outputLocation": "dist",
+      "appBuildCommand": "npm run build",
+      "apiBuildCommand": "npm run build",
+      "run": "npm run dev",
+      "devServerTimeout": 10000
+    }
+  }
+}
