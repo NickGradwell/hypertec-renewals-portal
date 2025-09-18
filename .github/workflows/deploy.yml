@@ -121,14 +121,11 @@ EOF
       
       - name: Deploy to Azure Static Web Apps
         run: |
-          # Install Azure CLI
-          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+          # Install Azure Static Web Apps CLI
+          npm install -g @azure/static-web-apps-cli
           
-          # Login to Azure
-          az login --service-principal --username ${{ secrets.AZURE_CLIENT_ID }} --password ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
-          
-          # Deploy to Static Web App
-          az staticwebapp deploy --name hypertec-renewals-dev --resource-group hypertec-renewals-eu-rg --source ./frontend/dist --output-location "dist"
+          # Deploy using SWA CLI
+          swa deploy ./frontend/dist --deployment-token ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
 
   build-and-deploy-api:
     runs-on: ubuntu-latest
