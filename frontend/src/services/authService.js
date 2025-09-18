@@ -78,8 +78,11 @@ class AuthService {
 
   async login() {
     try {
-      // For local development, use mock authentication
-      if (process.env.NODE_ENV === 'development' || !import.meta.env.VITE_AZURE_CLIENT_ID || import.meta.env.VITE_AZURE_CLIENT_ID === 'your-client-id') {
+      // For local development or when Azure AD B2C is not configured, use mock authentication
+      if (process.env.NODE_ENV === 'development' || 
+          !import.meta.env.VITE_AZURE_CLIENT_ID || 
+          import.meta.env.VITE_AZURE_CLIENT_ID === 'your-client-id' ||
+          import.meta.env.VITE_AZURE_TENANT_ID === 'your-tenant-id') {
         return this.mockLogin();
       }
 
@@ -125,8 +128,11 @@ class AuthService {
 
   async logout() {
     try {
-      // For local development, clear mock user from session storage
-      if (process.env.NODE_ENV === 'development' || !import.meta.env.VITE_AZURE_CLIENT_ID || import.meta.env.VITE_AZURE_CLIENT_ID === 'your-client-id') {
+      // For local development or when Azure AD B2C is not configured, clear mock user from session storage
+      if (process.env.NODE_ENV === 'development' || 
+          !import.meta.env.VITE_AZURE_CLIENT_ID || 
+          import.meta.env.VITE_AZURE_CLIENT_ID === 'your-client-id' ||
+          import.meta.env.VITE_AZURE_TENANT_ID === 'your-tenant-id') {
         sessionStorage.removeItem('mock-user');
         return;
       }
@@ -148,8 +154,11 @@ class AuthService {
 
   async getCurrentUser() {
     try {
-      // For local development, get mock user from session storage
-      if (process.env.NODE_ENV === 'development' || !import.meta.env.VITE_AZURE_CLIENT_ID || import.meta.env.VITE_AZURE_CLIENT_ID === 'your-client-id') {
+      // For local development or when Azure AD B2C is not configured, get mock user from session storage
+      if (process.env.NODE_ENV === 'development' || 
+          !import.meta.env.VITE_AZURE_CLIENT_ID || 
+          import.meta.env.VITE_AZURE_CLIENT_ID === 'your-client-id' ||
+          import.meta.env.VITE_AZURE_TENANT_ID === 'your-tenant-id') {
         const mockUser = sessionStorage.getItem('mock-user');
         return mockUser ? JSON.parse(mockUser) : null;
       }
@@ -246,8 +255,11 @@ class AuthService {
   }
 
   isAuthenticated() {
-    // For local development, check if we have a mock user in session storage
-    if (process.env.NODE_ENV === 'development' || !import.meta.env.VITE_AZURE_CLIENT_ID || import.meta.env.VITE_AZURE_CLIENT_ID === 'your-client-id') {
+    // For local development or when Azure AD B2C is not configured, check if we have a mock user in session storage
+    if (process.env.NODE_ENV === 'development' || 
+        !import.meta.env.VITE_AZURE_CLIENT_ID || 
+        import.meta.env.VITE_AZURE_CLIENT_ID === 'your-client-id' ||
+        import.meta.env.VITE_AZURE_TENANT_ID === 'your-tenant-id') {
       return sessionStorage.getItem('mock-user') !== null;
     }
     
