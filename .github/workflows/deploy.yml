@@ -34,13 +34,12 @@ jobs:
       
       - name: Create Single File Build
         run: |
-          cd frontend
           # Create a completely new minimal build with only ONE file
-          rm -rf dist
-          mkdir -p dist
+          rm -rf frontend/dist
+          mkdir -p frontend/dist
           
           # Create a single HTML file with inline favicon (base64 encoded)
-          cat > dist/index.html << 'EOF'
+          cat > frontend/dist/index.html << 'EOF'
           <!DOCTYPE html>
           <html lang="en">
           <head>
@@ -113,8 +112,8 @@ jobs:
           
           # Verify we only have ONE file
           echo "Final files:"
-          find dist -type f | wc -l
-          find dist -type f
+          find frontend/dist -type f | wc -l
+          find frontend/dist -type f
       
       - name: Debug Before Deployment
         run: |
@@ -141,7 +140,6 @@ jobs:
           output_location: "dist"
           skip_app_build: true
           skip_api_build: true
-          skip_deploy_on_missing_secrets: false
           deployment_environment: "Production"
 
   build-and-deploy-api:
