@@ -124,8 +124,14 @@ jobs:
           # Install Azure Static Web Apps CLI
           npm install -g @azure/static-web-apps-cli
           
-          # Deploy using SWA CLI with deployment token
-          swa deploy ./frontend/dist --deployment-token ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          # Debug: Show what we're trying to deploy
+          echo "Files in dist directory:"
+          ls -la ./frontend/dist/
+          echo "Content of index.html:"
+          head -10 ./frontend/dist/index.html
+          
+          # Deploy using SWA CLI with verbose output
+          swa deploy ./frontend/dist --deployment-token ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }} --verbose
 
   build-and-deploy-api:
     runs-on: ubuntu-latest
