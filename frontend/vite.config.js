@@ -18,10 +18,11 @@ export default defineConfig({
     minify: 'esbuild',
     rollupOptions: {
       output: {
+        // Bundle everything into a single file to minimize file count
         manualChunks: undefined,
-        assetFileNames: 'assets/[name].[hash].[ext]',
-        chunkFileNames: 'assets/[name].[hash].js',
-        entryFileNames: 'assets/[name].[hash].js'
+        assetFileNames: 'assets/[name].[ext]',
+        chunkFileNames: 'assets/[name].js',
+        entryFileNames: 'assets/[name].js'
       }
     }
   }
