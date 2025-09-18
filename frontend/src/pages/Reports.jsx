@@ -3,6 +3,18 @@ import { UserRole } from '../types';
 import Card from '../components/ui/Card';
 
 const Reports = ({ user }) => {
+  // Add safety check for user object
+  if (!user) {
+    return (
+      <div className="p-6 text-center">
+        <h2 className="text-xl font-semibold text-yellow-600 mb-4">Loading...</h2>
+        <p className="text-gray-600">
+          Please wait while we load your user information.
+        </p>
+      </div>
+    );
+  }
+
   const isAuthorized = user.role === UserRole.HYPERTEC_ADMIN || user.role === UserRole.PARTNER;
 
   if (!isAuthorized) {

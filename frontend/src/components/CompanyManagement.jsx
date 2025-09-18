@@ -47,12 +47,13 @@ const CompanyManagement = () => {
   const fetchCompanies = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/companies');
-      if (!response.ok) throw new Error('Failed to fetch companies');
-      const data = await response.json();
+      // Use the API service which handles the correct base URL
+      const { apiService } = await import('../services/apiService');
+      const data = await apiService.getCompanies();
       setCompanies(data.data || []);
     } catch (err) {
-      setError(err.message);
+      console.error('Error fetching companies:', err);
+      setError('Failed to fetch companies');
     } finally {
       setLoading(false);
     }

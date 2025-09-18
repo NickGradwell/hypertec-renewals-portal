@@ -58,6 +58,11 @@ function AppContent() {
     return <Login onLogin={login} error={error} />;
   }
 
+  // Safety check: ensure user object exists before rendering
+  if (!user) {
+    return <LoadingScreen />;
+  }
+
   // Main application
   return (
     <Layout user={user} onLogout={logout}>
