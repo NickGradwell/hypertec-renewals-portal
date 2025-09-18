@@ -110,10 +110,16 @@ jobs:
           </html>
           EOF
           
-          # Verify we only have ONE file
+          # Create empty API directory to satisfy Azure Static Web Apps
+          mkdir -p frontend/api
+          touch frontend/api/.gitkeep
+          
+          # Verify we only have ONE file in dist
           echo "Final files:"
           find frontend/dist -type f | wc -l
           find frontend/dist -type f
+          echo "API directory created:"
+          ls -la frontend/api/
       
       - name: Debug Before Deployment
         run: |
@@ -138,6 +144,7 @@ jobs:
           action: "upload"
           app_location: "/frontend"
           output_location: "dist"
+          api_location: "/frontend/api"
           skip_app_build: true
           skip_api_build: true
           deployment_environment: "Production"
