@@ -133,6 +133,26 @@ jobs:
           }
           EOF
           
+          # Create function.json for Azure Functions
+          cat > frontend/api/function.json << 'EOF'
+          {
+              "bindings": [
+                  {
+                      "authLevel": "anonymous",
+                      "type": "httpTrigger",
+                      "direction": "in",
+                      "name": "req",
+                      "methods": ["get", "post"]
+                  },
+                  {
+                      "type": "http",
+                      "direction": "out",
+                      "name": "res"
+                  }
+              ]
+          }
+          EOF
+          
           # Verify we have the right files
           echo "Final files:"
           find frontend/dist -type f | wc -l
