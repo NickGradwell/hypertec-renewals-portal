@@ -1,120 +1,111 @@
 const { app } = require('@azure/functions');
 const { executeQuery } = require('../../shared/db');
 
-app.http('getUsers', {
-  methods: ['GET'],
+app.http('users', {
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
   authLevel: 'function',
-  route: 'users',
+  route: 'users/{id?}',
   handler: async (request, context) => {
     try {
-      const [rows] = await executeQuery('SELECT * FROM users ORDER BY createdAt DESC');
-      
-      return {
-        status: 200,
-        body: JSON.stringify({ 
-          success: true,
-          data: rows 
-        })
-      };
-    } catch (error) {
-      context.log.error('Error fetching users:', error);
-      return {
-        status: 500,
-        body: JSON.stringify({ 
-          success: false,
-          error: 'Internal server error' 
-        })
-      };
-    }
-  }
-});
-
-app.http('createUser', {
-  methods: ['POST'],
-  authLevel: 'function',
-  route: 'users',
-  handler: async (request, context) => {
-    try {
-      const userData = await request.json();
-      
-      const [result] = await executeQuery(
-        'INSERT INTO users (email, name, role) VALUES (?, ?, ?)',
-        [userData.email, userData.name, userData.role || 'user']
-      );
-      
-      return {
-        status: 201,
-        body: JSON.stringify({ 
-          success: true,
-          data: { id: result.insertId || result.lastInsertRowid, ...userData }
-        })
-      };
-    } catch (error) {
-      context.log.error('Error creating user:', error);
-      return {
-        status: 500,
-        body: JSON.stringify({ 
-          success: false,
-          error: 'Internal server error' 
-        })
-      };
-    }
-  }
-});
-
-app.http('updateUser', {
-  methods: ['PUT'],
-  authLevel: 'function',
-  route: 'users/{id}',
-  handler: async (request, context) => {
-    try {
+      const method = request.method;
       const userId = request.params.id;
-      const userData = await request.json();
-      
-      await executeQuery(
-        'UPDATE users SET email = ?, name = ?, role = ? WHERE id = ?',
-        [userData.email, userData.name, userData.role, userId]
-      );
-      
-      return {
-        status: 200,
-        body: JSON.stringify({ 
-          success: true,
-          data: { id: userId, ...userData }
-        })
-      };
-    } catch (error) {
-      context.log.error('Error updating user:', error);
-      return {
-        status: 500,
-        body: JSON.stringify({ 
-          success: false,
-          error: 'Internal server error' 
-        })
-      };
-    }
-  }
-});
 
-app.http('deleteUser', {
-  methods: ['DELETE'],
-  authLevel: 'function',
-  route: 'users/{id}',
-  handler: async (request, context) => {
-    try {
-      const userId = request.params.id;
-      
-      await executeQuery('DELETE FROM users WHERE id = ?', [userId]);
-      
-      return {
-        status: 200,
-        body: JSON.stringify({ 
-          success: true,
-          message: 'User deleted successfully'
-        })
-      };
+      switch (method) {
+        case 'GET':
+          if (userId) {
+            // Get single user
+            const [rows] = await executeQuery('SELECT * FROM users WHERE id = ?', [userId]);
+            return {
+              status: 200,
+              body: JSON.stringify({ 
+                success: true,
+                data: rows[0] || null
+              })
+            };
+          } else {
+            // Get all users
+            const [rows] = await executeQuery('SELECT * FROM users ORDER BY createdAt DESC');
+            return {
+              status: 200,
+              body: JSON.stringify({ 
+                success: true,
+                data: rows 
+              })
+            };
+          }
+
+        case 'POST':
+          const userData = await request.json();
+          const [result] = await executeQuery(
+            'INSERT INTO users (email, firstName, lastName, role, companyId) VALUES (?, ?, ?, ?, ?)',
+            [userData.email, userData.firstName, userData.lastName, userData.role, userData.companyId]
+          );
+          
+          return {
+            status: 201,
+            body: JSON.stringify({ 
+              success: true,
+              data: { id: result.insertId || result.lastInsertRowid, ...userData }
+            })
+          };
+
+        case 'PUT':
+          if (!userId) {
+            return {
+              status: 400,
+              body: JSON.stringify({ 
+                success: false,
+                error: 'User ID is required for update'
+              })
+            };
+          }
+          
+          const updateData = await request.json();
+          await executeQuery(
+            'UPDATE users SET email = ?, firstName = ?, lastName = ?, role = ?, companyId = ? WHERE id = ?',
+            [updateData.email, updateData.firstName, updateData.lastName, updateData.role, updateData.companyId, userId]
+          );
+          
+          return {
+            status: 200,
+            body: JSON.stringify({ 
+              success: true,
+              data: { id: userId, ...updateData }
+            })
+          };
+
+        case 'DELETE':
+          if (!userId) {
+            return {
+              status: 400,
+              body: JSON.stringify({ 
+                success: false,
+                error: 'User ID is required for deletion'
+              })
+            };
+          }
+          
+          await executeQuery('DELETE FROM users WHERE id = ?', [userId]);
+          
+          return {
+            status: 200,
+            body: JSON.stringify({ 
+              success: true,
+              message: 'User deleted successfully'
+            })
+          };
+
+        default:
+          return {
+            status: 405,
+            body: JSON.stringify({ 
+              success: false,
+              error: 'Method not allowed'
+            })
+          };
+      }
     } catch (error) {
-      context.log.error('Error deleting user:', error);
+      context.log.error('Error in users function:', error);
       return {
         status: 500,
         body: JSON.stringify({ 

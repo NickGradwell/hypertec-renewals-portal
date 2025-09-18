@@ -6,7 +6,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["get", "post", "put", "delete"],
-      "route": "users"
+      "route": "users/{id?}"
     },
     {
       "type": "http",
@@ -15,4 +15,3 @@
     }
   ]
 }
-
