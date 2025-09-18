@@ -315,6 +315,19 @@ async function startServer() {
     console.log('  POST   /api/records');
     console.log('  PUT    /api/records/:id');
     console.log('  DELETE /api/records/:id');
+    console.log('  GET    /api/users');
+    console.log('  POST   /api/users');
+    console.log('  PUT    /api/users/:id');
+    console.log('  DELETE /api/users/:id');
+    console.log('  GET    /api/companies');
+    console.log('  POST   /api/companies');
+    console.log('  PUT    /api/companies/:id');
+    console.log('  DELETE /api/companies/:id');
+    console.log('  GET    /api/email-templates');
+    console.log('  PUT    /api/email-templates/:id');
+    console.log('  GET    /api/email-logs');
+    console.log('  POST   /api/email-logs/:id/resend');
+    console.log('  POST   /api/upload');
   });
 }
 
