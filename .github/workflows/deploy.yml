@@ -116,6 +116,22 @@ jobs:
           find dist -type f | wc -l
           find dist -type f
       
+      - name: Debug Before Deployment
+        run: |
+          echo "=== DEBUGGING DEPLOYMENT ==="
+          echo "Current directory: $(pwd)"
+          echo "Files in frontend/dist:"
+          ls -la frontend/dist/
+          echo "File count: $(find frontend/dist -type f | wc -l)"
+          echo "Total size: $(du -sh frontend/dist)"
+          echo "Contents of index.html (first 5 lines):"
+          head -5 frontend/dist/index.html
+          echo "Token length: ${#AZURE_STATIC_WEB_APPS_API_TOKEN}"
+          echo "Token starts with: ${AZURE_STATIC_WEB_APPS_API_TOKEN:0:10}..."
+          echo "=== END DEBUG ==="
+        env:
+          AZURE_STATIC_WEB_APPS_API_TOKEN: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+      
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
         with:
@@ -125,6 +141,8 @@ jobs:
           output_location: "dist"
           skip_app_build: true
           skip_api_build: true
+          skip_deploy_on_missing_secrets: false
+          deployment_environment: "Production"
 
   build-and-deploy-api:
     runs-on: ubuntu-latest
