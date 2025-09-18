@@ -9,7 +9,7 @@ import Dashboard from './pages/Dashboard';
 import UploadLicenses from './pages/UploadLicenses';
 import EmailTemplates from './pages/EmailTemplates';
 import EmailLogs from './components/EmailLogs';
-import Reports from './components/Reports';
+import Reports from './pages/Reports';
 import UserManagement from './components/UserManagement';
 import CompanyManagement from './components/CompanyManagement';
 import Login from './pages/Login';
@@ -77,7 +77,7 @@ function AppContent() {
           <EmailTemplates user={user} />
         } />
         <Route path="/email-logs" element={<EmailLogs />} />
-        <Route path="/reports" element={<Reports />} />
+        <Route path="/reports" element={<Reports user={user} />} />
         <Route path="/user-management" element={<UserManagement />} />
         <Route path="/company-management" element={<CompanyManagement />} />
       </Routes>
