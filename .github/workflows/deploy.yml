@@ -120,18 +120,15 @@ jobs:
           find dist -type f
       
       - name: Deploy to Azure Static Web Apps
-        run: |
-          # Install Azure Static Web Apps CLI
-          npm install -g @azure/static-web-apps-cli
-          
-          # Debug: Show what we're trying to deploy
-          echo "Files in dist directory:"
-          ls -la ./frontend/dist/
-          echo "Content of index.html:"
-          head -10 ./frontend/dist/index.html
-          
-          # Deploy using SWA CLI with verbose output
-          swa deploy ./frontend/dist --deployment-token ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }} --verbose
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "/frontend"
+          output_location: "dist"
+          skip_app_build: true
+          skip_api_build: true
 
   build-and-deploy-api:
     runs-on: ubuntu-latest
