@@ -101,4 +101,4 @@ jobs:
       - name: Deploy to Azure Functions
         run: |
           cd api
-          func azure functionapp publish hypertec-renewals-dev-api --node
+          func azure functionapp publish hypertec-renewals-api-v2 --node
