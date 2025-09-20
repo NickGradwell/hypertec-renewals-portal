@@ -1,12 +1,10 @@
-const { app } = require('@azure/functions');
+import { app } from '@azure/functions';
 
 // Import all functions
-require('./src/functions/health');
-require('./src/functions/auth');
-require('./src/functions/companies');
-require('./src/functions/users');
-require('./src/functions/records');
-require('./src/functions/emails');
-require('./src/functions/email-logs');
-
-module.exports = app;
+import './src/functions/health/index.js';
+import './src/functions/auth/index.js';
+import './src/functions/companies/index.js';
+import './src/functions/users/index.js';
+import './src/functions/records/index.js';
+import './src/functions/emails/index.js';
+import './src/functions/email-logs/index.js';

@@ -1,4 +1,4 @@
-const { app } = require('@azure/functions');
+import { app } from '@azure/functions';
 const { executeQuery } = require('../../shared/db');
 
 app.http('getEmailTemplates', {

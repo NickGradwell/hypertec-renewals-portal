@@ -1,4 +1,4 @@
-const { app } = require('@azure/functions');
+import { app } from '@azure/functions';
 const jwt = require('jsonwebtoken');
 
 // Middleware to validate Azure AD B2C tokens
