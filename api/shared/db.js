@@ -1,8 +1,12 @@
-const mysql = require('mysql2/promise');
-const Database = require('better-sqlite3');
-const { DefaultAzureCredential } = require('@azure/identity');
-const { SecretClient } = require('@azure/keyvault-secrets');
-const path = require('path');
+import mysql from 'mysql2/promise';
+import Database from 'better-sqlite3';
+import { DefaultAzureCredential } from '@azure/identity';
+import { SecretClient } from '@azure/keyvault-secrets';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 let pool = null;
 let sqliteDb = null;
@@ -212,4 +216,4 @@ async function executeQuery(query, params = []) {
   }
 }
 
-module.exports = { getDbPool, executeQuery };
+export { getDbPool, executeQuery };

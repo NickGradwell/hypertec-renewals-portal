@@ -1,5 +1,5 @@
 import { app } from '@azure/functions';
-const { executeQuery } = require('../../shared/db');
+import { executeQuery } from '../../shared/db.js';
 
 app.http('getRecords', {
   methods: ['GET'],
