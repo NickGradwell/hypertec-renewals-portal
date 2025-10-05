@@ -64,7 +64,7 @@ jobs:
 
   build-and-deploy-api:
     runs-on: ubuntu-latest
-    name: Build and Deploy API
+    name: Build and Deploy Express.js API
     steps:
       - uses: actions/checkout@v4
       
@@ -73,7 +73,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: api/package-lock.json
+          cache-dependency-path: simple-api/package-lock.json
       
       - name: Install Azure CLI
         run: |
@@ -89,16 +89,19 @@ jobs:
         run: |
           az account show
       
-      - name: Install Azure Functions Core Tools
-        run: |
-          npm install -g azure-functions-core-tools@4 --unsafe-perm true
-      
       - name: Install API Dependencies
         run: |
-          cd api
+          cd simple-api
           npm ci
       
-      - name: Deploy to Azure Functions
+      - name: Create Deployment Package
         run: |
-          cd api
-          func azure functionapp publish hypertec-renewals-api-v2 --node
+          cd simple-api
+          zip -r ../simple-api-deploy.zip . -x node_modules/.cache/\*
+      
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'hypertec-renewals-simple-api'
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: './simple-api-deploy.zip'
