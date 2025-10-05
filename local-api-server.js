@@ -1,6 +1,30 @@
-const express = require('express');
-const cors = require('cors');
-const { getDbPool } = require('./api/shared/db');
+import express from 'express';
+import cors from 'cors';
+import fs from 'fs';
+import { getDbPool, getDatabaseInfo, testConnection, executeQuery } from './api/shared/db.js';
+
+// Load environment variables from local.settings.json
+const loadLocalSettings = () => {
+  try {
+    const settingsPath = './api/local.settings.json';
+    const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    
+    // Set environment variables
+    Object.entries(settings.Values).forEach(([key, value]) => {
+      if (!process.env[key]) {
+        process.env[key] = value;
+      }
+    });
+    
+    console.log('📋 Loaded environment variables from local.settings.json');
+    console.log(`🗄️  Database Type: ${process.env.DATABASE_TYPE || 'sqlite'}`);
+  } catch (error) {
+    console.log('⚠️  Could not load local.settings.json, using default environment');
+  }
+};
+
+// Load settings before importing database module
+loadLocalSettings();
 
 const app = express();
 const port = 3001;
@@ -24,8 +48,7 @@ async function initializeDatabase() {
 // Routes
 app.get('/api/records', async (req, res) => {
   try {
-    const db = await getDbPool();
-    const rows = db.prepare('SELECT * FROM records ORDER BY createdAt DESC').all();
+    const [rows] = await executeQuery('SELECT * FROM records ORDER BY createdAt DESC');
     res.json({ success: true, data: rows });
   } catch (error) {
     console.error('Error fetching records:', error);
@@ -36,25 +59,22 @@ app.get('/api/records', async (req, res) => {
 app.post('/api/records', async (req, res) => {
   try {
     const recordData = req.body;
-    const db = await getDbPool();
     
-    const stmt = db.prepare(`
+    const [result] = await executeQuery(`
       INSERT INTO records (recordType, customerName, partnerName, partcode, serial, renewalDue, status, licenses, dateOfOrder, dateOfIssue, helReference, resellerOrderNum, endUserRef, renewalEnabled, instructions, voucherCodes, claimedCount) 
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    
-    const result = stmt.run(
+    `, [
       recordData.recordType, recordData.customerName, recordData.partnerName, 
       recordData.partcode, recordData.serial, recordData.renewalDue, 
       recordData.status, recordData.licenses, recordData.dateOfOrder, 
       recordData.dateOfIssue, recordData.helReference, recordData.resellerOrderNum, 
       recordData.endUserRef, recordData.renewalEnabled, recordData.instructions,
       JSON.stringify(recordData.voucherCodes || []), recordData.claimedCount || 0
-    );
+    ]);
     
     res.status(201).json({ 
       success: true, 
-      data: { id: result.lastInsertRowid, ...recordData }
+      data: { id: result.insertId || result.lastInsertRowid, ...recordData }
     });
   } catch (error) {
     console.error('Error creating record:', error);
@@ -66,18 +86,15 @@ app.put('/api/records/:id', async (req, res) => {
   try {
     const recordId = req.params.id;
     const recordData = req.body;
-    const db = await getDbPool();
     
-    const stmt = db.prepare(`
+    await executeQuery(`
       UPDATE records SET 
       recordType = ?, customerName = ?, partnerName = ?, partcode = ?, serial = ?, 
       renewalDue = ?, status = ?, licenses = ?, dateOfOrder = ?, dateOfIssue = ?, 
       helReference = ?, resellerOrderNum = ?, endUserRef = ?, renewalEnabled = ?, 
       instructions = ?, voucherCodes = ?, claimedCount = ?, updatedAt = CURRENT_TIMESTAMP
       WHERE id = ?
-    `);
-    
-    stmt.run(
+    `, [
       recordData.recordType, recordData.customerName, recordData.partnerName, 
       recordData.partcode, recordData.serial, recordData.renewalDue, 
       recordData.status, recordData.licenses, recordData.dateOfOrder, 
@@ -85,7 +102,7 @@ app.put('/api/records/:id', async (req, res) => {
       recordData.endUserRef, recordData.renewalEnabled, recordData.instructions,
       JSON.stringify(recordData.voucherCodes || []), recordData.claimedCount || 0,
       recordId
-    );
+    ]);
     
     res.json({ success: true, data: { id: recordId, ...recordData } });
   } catch (error) {
@@ -97,10 +114,8 @@ app.put('/api/records/:id', async (req, res) => {
 app.delete('/api/records/:id', async (req, res) => {
   try {
     const recordId = req.params.id;
-    const db = await getDbPool();
     
-    const stmt = db.prepare('DELETE FROM records WHERE id = ?');
-    stmt.run(recordId);
+    await executeQuery('DELETE FROM records WHERE id = ?', [recordId]);
     
     res.json({ success: true, message: 'Record deleted successfully' });
   } catch (error) {
@@ -112,8 +127,7 @@ app.delete('/api/records/:id', async (req, res) => {
 // Users endpoints
 app.get('/api/users', async (req, res) => {
   try {
-    const db = await getDbPool();
-    const rows = db.prepare('SELECT * FROM users ORDER BY createdAt DESC').all();
+    const [rows] = await executeQuery('SELECT * FROM users ORDER BY createdAt DESC');
     res.json({ success: true, data: rows });
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -124,12 +138,10 @@ app.get('/api/users', async (req, res) => {
 app.post('/api/users', async (req, res) => {
   try {
     const userData = req.body;
-    const db = await getDbPool();
     
-    const stmt = db.prepare('INSERT INTO users (email, name, role) VALUES (?, ?, ?)');
-    const result = stmt.run(userData.email, userData.name, userData.role || 'user');
+    const [result] = await executeQuery('INSERT INTO users (email, name, role) VALUES (?, ?, ?)', [userData.email, userData.name, userData.role || 'user']);
     
-    res.status(201).json({ success: true, data: { id: result.lastInsertRowid, ...userData } });
+    res.status(201).json({ success: true, data: { id: result.insertId || result.lastInsertRowid, ...userData } });
   } catch (error) {
     console.error('Error creating user:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
@@ -140,10 +152,8 @@ app.put('/api/users/:id', async (req, res) => {
   try {
     const userId = req.params.id;
     const userData = req.body;
-    const db = await getDbPool();
     
-    const stmt = db.prepare('UPDATE users SET email = ?, name = ?, role = ? WHERE id = ?');
-    stmt.run(userData.email, userData.name, userData.role, userId);
+    await executeQuery('UPDATE users SET email = ?, name = ?, role = ? WHERE id = ?', [userData.email, userData.name, userData.role, userId]);
     
     res.json({ success: true, data: { id: userId, ...userData } });
   } catch (error) {
@@ -155,10 +165,8 @@ app.put('/api/users/:id', async (req, res) => {
 app.delete('/api/users/:id', async (req, res) => {
   try {
     const userId = req.params.id;
-    const db = await getDbPool();
     
-    const stmt = db.prepare('DELETE FROM users WHERE id = ?');
-    stmt.run(userId);
+    await executeQuery('DELETE FROM users WHERE id = ?', [userId]);
     
     res.json({ success: true, message: 'User deleted successfully' });
   } catch (error) {
@@ -170,8 +178,7 @@ app.delete('/api/users/:id', async (req, res) => {
 // Companies endpoints
 app.get('/api/companies', async (req, res) => {
   try {
-    const db = await getDbPool();
-    const rows = db.prepare('SELECT * FROM companies ORDER BY createdAt DESC').all();
+    const [rows] = await executeQuery('SELECT * FROM companies ORDER BY createdAt DESC');
     res.json({ success: true, data: rows });
   } catch (error) {
     console.error('Error fetching companies:', error);
@@ -182,12 +189,10 @@ app.get('/api/companies', async (req, res) => {
 app.post('/api/companies', async (req, res) => {
   try {
     const companyData = req.body;
-    const db = await getDbPool();
     
-    const stmt = db.prepare('INSERT INTO companies (name, contactEmail, contactPhone, address) VALUES (?, ?, ?, ?)');
-    const result = stmt.run(companyData.name, companyData.contactEmail, companyData.contactPhone, companyData.address);
+    const [result] = await executeQuery('INSERT INTO companies (name, contactEmail, contactPhone, address) VALUES (?, ?, ?, ?)', [companyData.name, companyData.contactEmail, companyData.contactPhone, companyData.address]);
     
-    res.status(201).json({ success: true, data: { id: result.lastInsertRowid, ...companyData } });
+    res.status(201).json({ success: true, data: { id: result.insertId || result.lastInsertRowid, ...companyData } });
   } catch (error) {
     console.error('Error creating company:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
@@ -198,10 +203,8 @@ app.put('/api/companies/:id', async (req, res) => {
   try {
     const companyId = req.params.id;
     const companyData = req.body;
-    const db = await getDbPool();
     
-    const stmt = db.prepare('UPDATE companies SET name = ?, contactEmail = ?, contactPhone = ?, address = ? WHERE id = ?');
-    stmt.run(companyData.name, companyData.contactEmail, companyData.contactPhone, companyData.address, companyId);
+    await executeQuery('UPDATE companies SET name = ?, contactEmail = ?, contactPhone = ?, address = ? WHERE id = ?', [companyData.name, companyData.contactEmail, companyData.contactPhone, companyData.address, companyId]);
     
     res.json({ success: true, data: { id: companyId, ...companyData } });
   } catch (error) {
@@ -213,10 +216,8 @@ app.put('/api/companies/:id', async (req, res) => {
 app.delete('/api/companies/:id', async (req, res) => {
   try {
     const companyId = req.params.id;
-    const db = await getDbPool();
     
-    const stmt = db.prepare('DELETE FROM companies WHERE id = ?');
-    stmt.run(companyId);
+    await executeQuery('DELETE FROM companies WHERE id = ?', [companyId]);
     
     res.json({ success: true, message: 'Company deleted successfully' });
   } catch (error) {
@@ -228,8 +229,7 @@ app.delete('/api/companies/:id', async (req, res) => {
 // Email Templates endpoints
 app.get('/api/email-templates', async (req, res) => {
   try {
-    const db = await getDbPool();
-    const rows = db.prepare('SELECT * FROM email_templates ORDER BY createdAt DESC').all();
+    const [rows] = await executeQuery('SELECT * FROM email_templates ORDER BY createdAt DESC');
     res.json({ success: true, data: rows });
   } catch (error) {
     console.error('Error fetching email templates:', error);
@@ -241,10 +241,8 @@ app.put('/api/email-templates/:id', async (req, res) => {
   try {
     const templateId = req.params.id;
     const templateData = req.body;
-    const db = await getDbPool();
     
-    const stmt = db.prepare('UPDATE email_templates SET name = ?, subject = ?, body = ?, isActive = ? WHERE id = ?');
-    stmt.run(templateData.name, templateData.subject, templateData.body, templateData.isActive, templateId);
+    await executeQuery('UPDATE email_templates SET name = ?, subject = ?, body = ?, isActive = ? WHERE id = ?', [templateData.name, templateData.subject, templateData.body, templateData.isActive, templateId]);
     
     res.json({ success: true, data: { id: templateId, ...templateData } });
   } catch (error) {
@@ -256,13 +254,12 @@ app.put('/api/email-templates/:id', async (req, res) => {
 // Email Logs endpoints
 app.get('/api/email-logs', async (req, res) => {
   try {
-    const db = await getDbPool();
-    const rows = db.prepare(`
+    const [rows] = await executeQuery(`
       SELECT el.*, et.name as templateName 
       FROM email_logs el 
       LEFT JOIN email_templates et ON el.templateId = et.id 
       ORDER BY el.sentAt DESC
-    `).all();
+    `);
     res.json({ success: true, data: rows });
   } catch (error) {
     console.error('Error fetching email logs:', error);
@@ -273,11 +270,9 @@ app.get('/api/email-logs', async (req, res) => {
 app.post('/api/email-logs/:id/resend', async (req, res) => {
   try {
     const logId = req.params.id;
-    const db = await getDbPool();
     
     // Update the status to indicate resend
-    const stmt = db.prepare('UPDATE email_logs SET status = ? WHERE id = ?');
-    stmt.run('Resent', logId);
+    await executeQuery('UPDATE email_logs SET status = ? WHERE id = ?', ['Resent', logId]);
     
     res.json({ success: true, message: 'Email resent successfully' });
   } catch (error) {
@@ -301,6 +296,30 @@ app.post('/api/upload', async (req, res) => {
   } catch (error) {
     console.error('Error uploading file:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// Database management endpoints
+app.get('/api/database/info', (req, res) => {
+  try {
+    const dbInfo = getDatabaseInfo();
+    res.json({ success: true, data: dbInfo });
+  } catch (error) {
+    console.error('Error getting database info:', error);
+    res.status(500).json({ success: false, error: 'Failed to get database info' });
+  }
+});
+
+app.get('/api/database/test', async (req, res) => {
+  try {
+    const testResult = await testConnection();
+    res.status(testResult.success ? 200 : 500).json({ 
+      success: testResult.success, 
+      data: testResult 
+    });
+  } catch (error) {
+    console.error('Error testing database connection:', error);
+    res.status(500).json({ success: false, error: 'Failed to test database connection' });
   }
 });
 
@@ -328,6 +347,11 @@ async function startServer() {
     console.log('  GET    /api/email-logs');
     console.log('  POST   /api/email-logs/:id/resend');
     console.log('  POST   /api/upload');
+    console.log('  GET    /api/database/info');
+    console.log('  GET    /api/database/test');
+    console.log('');
+    console.log('🔄 Database switching: node switch-database.js <config>');
+    console.log('📖 Documentation: see DATABASE_SWITCHING.md');
   });
 }
 

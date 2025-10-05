@@ -11,12 +11,29 @@ const __dirname = path.dirname(__filename);
 let pool = null;
 let sqliteDb = null;
 
-// Check if we're running locally
-const isLocal = process.env.NODE_ENV === 'development' || process.env.AZURE_FUNCTIONS_ENVIRONMENT !== 'Production';
+// Database configuration
+const getDatabaseConfig = () => {
+  // Check if we're running locally
+  const isLocal = process.env.NODE_ENV === 'development' || process.env.AZURE_FUNCTIONS_ENVIRONMENT !== 'Production';
+  
+  // Get database type from environment variable
+  const dbType = process.env.DATABASE_TYPE || (isLocal ? 'sqlite' : 'mysql');
+  
+  return {
+    isLocal,
+    dbType,
+    useSQLite: dbType === 'sqlite',
+    useMySQL: dbType === 'mysql'
+  };
+};
+
+// Get fresh config each time (not cached)
+const getConfig = () => getDatabaseConfig();
 
 async function getDbPool() {
-  if (isLocal) {
-    // Use SQLite for local development
+  const config = getConfig();
+  if (config.useSQLite) {
+    // Use SQLite
     if (!sqliteDb) {
       const dbPath = path.join(__dirname, '../../data/local.db');
       sqliteDb = new Database(dbPath);
@@ -25,29 +42,51 @@ async function getDbPool() {
       await initializeLocalDatabase(sqliteDb);
     }
     return sqliteDb;
-  } else {
-    // Use MySQL for production
+  } else if (config.useMySQL) {
+    // Use MySQL
     if (!pool) {
-      const credential = new DefaultAzureCredential();
-      const keyVaultUrl = process.env.KEY_VAULT_URL;
-      const secretClient = new SecretClient(keyVaultUrl, credential);
+      let mysqlConfig;
       
-      const dbHost = await secretClient.getSecret('db-host');
-      const dbUser = await secretClient.getSecret('db-user');
-      const dbPassword = await secretClient.getSecret('db-password');
-      const dbName = await secretClient.getSecret('db-name');
+      if (config.isLocal) {
+        // Use direct environment variables for local development
+        mysqlConfig = {
+          host: process.env.MYSQL_HOST,
+          user: process.env.MYSQL_USER,
+          password: process.env.MYSQL_PASSWORD,
+          database: process.env.MYSQL_DATABASE,
+          port: parseInt(process.env.MYSQL_PORT) || 3306,
+          ssl: process.env.MYSQL_SSL === 'true' ? { rejectUnauthorized: false } : false,
+          waitForConnections: true,
+          connectionLimit: 10,
+          queueLimit: 0
+        };
+      } else {
+        // Use Azure Key Vault for production
+        const credential = new DefaultAzureCredential();
+        const keyVaultUrl = process.env.KEY_VAULT_URL;
+        const secretClient = new SecretClient(keyVaultUrl, credential);
+        
+        const dbHost = await secretClient.getSecret('db-host');
+        const dbUser = await secretClient.getSecret('db-user');
+        const dbPassword = await secretClient.getSecret('db-password');
+        const dbName = await secretClient.getSecret('db-name');
+        
+        mysqlConfig = {
+          host: dbHost.value,
+          user: dbUser.value,
+          password: dbPassword.value,
+          database: dbName.value,
+          waitForConnections: true,
+          connectionLimit: 10,
+          queueLimit: 0
+        };
+      }
       
-      pool = mysql.createPool({
-        host: dbHost.value,
-        user: dbUser.value,
-        password: dbPassword.value,
-        database: dbName.value,
-        waitForConnections: true,
-        connectionLimit: 10,
-        queueLimit: 0
-      });
+      pool = mysql.createPool(mysqlConfig);
     }
     return pool;
+  } else {
+    throw new Error(`Unsupported database type: ${config.dbType}`);
   }
 }
 
@@ -201,8 +240,9 @@ async function initializeLocalDatabase(db) {
 // Helper function to execute queries that work with both SQLite and MySQL
 async function executeQuery(query, params = []) {
   const db = await getDbPool();
+  const config = getConfig();
   
-  if (isLocal) {
+  if (config.useSQLite) {
     // SQLite
     if (query.trim().toUpperCase().startsWith('SELECT')) {
       return [db.prepare(query).all(...params)];
@@ -210,10 +250,60 @@ async function executeQuery(query, params = []) {
       const stmt = db.prepare(query);
       return [stmt.run(...params)];
     }
-  } else {
+  } else if (config.useMySQL) {
     // MySQL
     return await db.execute(query, params);
+  } else {
+    throw new Error(`Unsupported database type: ${config.dbType}`);
   }
 }
 
-export { getDbPool, executeQuery };
+// Function to get current database configuration info
+function getDatabaseInfo() {
+  const config = getConfig();
+  return {
+    type: config.dbType,
+    isLocal: config.isLocal,
+    useSQLite: config.useSQLite,
+    useMySQL: config.useMySQL,
+    environment: process.env.NODE_ENV || 'development'
+  };
+}
+
+// Function to test database connection
+async function testConnection() {
+  try {
+    const db = await getDbPool();
+    const config = getConfig();
+    
+    if (config.useSQLite) {
+      // Test SQLite connection
+      const result = db.prepare('SELECT 1 as test').get();
+      return {
+        success: true,
+        type: 'SQLite',
+        message: 'SQLite connection successful',
+        testResult: result
+      };
+    } else if (config.useMySQL) {
+      // Test MySQL connection
+      const [rows] = await db.execute('SELECT 1 as test');
+      return {
+        success: true,
+        type: 'MySQL',
+        message: 'MySQL connection successful',
+        testResult: rows[0]
+      };
+    }
+  } catch (error) {
+    const config = getConfig(); // Get fresh config here
+    return {
+      success: false,
+      type: config.dbType,
+      message: 'Database connection failed',
+      error: error.message
+    };
+  }
+}
+
+export { getDbPool, executeQuery, getDatabaseInfo, testConnection };

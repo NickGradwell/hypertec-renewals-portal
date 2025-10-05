@@ -1,4 +1,14 @@
 {
+  "name": "hypertec-renewals-portal",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Hypertec Renewals Portal - Database switching enabled",
+  "scripts": {
+    "start:local": "node local-api-server.js",
+    "switch:sqlite": "node switch-database.js sqlite",
+    "switch:mysql": "node switch-database.js mysql-local",
+    "switch:production": "node switch-database.js mysql-production"
+  },
   "dependencies": {
     "@azure/identity": "^4.12.0",
     "@azure/keyvault-secrets": "^4.10.0",

@@ -1,0 +1,27 @@
+{
+  "sqlite": {
+    "description": "Local SQLite database for development",
+    "environment": {
+      "DATABASE_TYPE": "sqlite"
+    }
+  },
+  "mysql-local": {
+    "description": "Local MySQL connection to Azure database",
+    "environment": {
+      "DATABASE_TYPE": "mysql",
+      "MYSQL_HOST": "hypertec-renewals-mysql.mysql.database.azure.com",
+      "MYSQL_USER": "hypertecadmin",
+      "MYSQL_PASSWORD": "MyNewPassword123!",
+      "MYSQL_DATABASE": "hypertec_renewals",
+      "MYSQL_PORT": "3306",
+      "MYSQL_SSL": "true"
+    }
+  },
+  "mysql-production": {
+    "description": "Production MySQL via Azure Key Vault",
+    "environment": {
+      "DATABASE_TYPE": "mysql",
+      "KEY_VAULT_URL": "https://your-keyvault.vault.azure.net/"
+    }
+  }
+}
