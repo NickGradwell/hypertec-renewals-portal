@@ -3,7 +3,7 @@ import authService from './authService';
 
 // Create axios instance with base configuration
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://hypertec-renewals-api-v2.azurewebsites.net/api' : '/api'),
+  baseURL: import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://hypertec-renewals-simple-api.azurewebsites.net/api' : '/api'),
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

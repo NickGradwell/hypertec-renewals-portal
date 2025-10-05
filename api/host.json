@@ -1,28 +1,7 @@
 {
   "version": "2.0",
-  "logging": {
-    "applicationInsights": {
-      "samplingSettings": {
-        "isEnabled": true,
-        "excludedTypes": "Request"
-      }
-    }
-  },
   "extensionBundle": {
     "id": "Microsoft.Azure.Functions.ExtensionBundle",
     "version": "[3.*, 4.0.0)"
-  },
-  "functionTimeout": "00:10:00",
-  "http": {
-    "routePrefix": "api",
-    "cors": {
-      "allowedOrigins": [
-        "https://icy-tree-03ca07603.2.azurestaticapps.net",
-        "https://ambitious-field-0f2993c03-preview.westeurope.1.azurestaticapps.net",
-        "http://localhost:5173",
-        "http://localhost:3000"
-      ],
-      "supportCredentials": false
-    }
   }
 }

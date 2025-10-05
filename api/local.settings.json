@@ -3,14 +3,6 @@
   "Values": {
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "node",
-    "NODE_ENV": "development",
-    "KEY_VAULT_URL": "https://your-keyvault.vault.azure.net/",
-    "DATABASE_TYPE": "mysql",
-    "MYSQL_HOST": "hypertec-renewals-mysql.mysql.database.azure.com",
-    "MYSQL_USER": "hypertecadmin",
-    "MYSQL_PASSWORD": "MyNewPassword123!",
-    "MYSQL_DATABASE": "hypertec_renewals",
-    "MYSQL_PORT": "3306",
-    "MYSQL_SSL": "true"
+    "NODE_ENV": "development"
   }
 }
