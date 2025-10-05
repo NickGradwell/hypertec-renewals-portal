@@ -14,10 +14,16 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   async (config) => {
     try {
-      const token = await authService.acquireToken();
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+      // Only try to acquire token if Azure AD B2C is properly configured
+      if (import.meta.env.VITE_AZURE_CLIENT_ID && 
+          import.meta.env.VITE_AZURE_CLIENT_ID !== 'your-client-id' &&
+          import.meta.env.VITE_AZURE_TENANT_ID !== 'your-tenant-id') {
+        const token = await authService.acquireToken();
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
       }
+      // For mock authentication, we don't need to add any headers
     } catch (error) {
       console.error('Failed to acquire token for request:', error);
     }
@@ -32,7 +38,11 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401) {
+    // Only handle 401 errors if Azure AD B2C is properly configured
+    if (error.response?.status === 401 && 
+        import.meta.env.VITE_AZURE_CLIENT_ID && 
+        import.meta.env.VITE_AZURE_CLIENT_ID !== 'your-client-id' &&
+        import.meta.env.VITE_AZURE_TENANT_ID !== 'your-tenant-id') {
       // Token expired or invalid, try to refresh
       try {
         await authService.logout();
