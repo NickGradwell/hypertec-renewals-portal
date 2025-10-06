@@ -1,14 +1,26 @@
 import axios from 'axios';
 import authService from './authService';
 
+// Resolve baseURL: force absolute API in production
+const resolvedBaseURL = import.meta.env.PROD
+  ? 'https://hypertec-renewals-simple-api.azurewebsites.net/api'
+  : (import.meta.env.VITE_API_URL || '/api');
+
 // Create axios instance with base configuration
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://hypertec-renewals-simple-api.azurewebsites.net/api' : '/api'),
+  baseURL: resolvedBaseURL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+// Log resolved baseURL in production to verify runtime configuration
+if (import.meta.env.PROD) {
+  // This appears once on app load and helps confirm which API the bundle is calling
+  // eslint-disable-next-line no-console
+  console.log('[apiService] Resolved baseURL:', apiClient.defaults.baseURL);
+}
 
 // Request interceptor to add authentication token
 apiClient.interceptors.request.use(

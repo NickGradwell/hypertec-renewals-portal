@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiService } from '../services/apiService';
 import { 
   Table, 
   Card, 
@@ -46,12 +47,10 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/users');
-      if (!response.ok) throw new Error('Failed to fetch users');
-      const data = await response.json();
-      setUsers(data.data || []);
+      const response = await apiService.getUsers();
+      setUsers(Array.isArray(response?.data) ? response.data : []);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Failed to fetch users');
     } finally {
       setLoading(false);
     }
@@ -60,39 +59,28 @@ const UserManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const url = selectedUser ? `/api/users/${selectedUser.id}` : '/api/users';
-      const method = selectedUser ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-
-      if (!response.ok) throw new Error(`Failed to ${selectedUser ? 'update' : 'create'} user`);
-      
+      if (selectedUser) {
+        await apiService.updateUser(selectedUser.id, formData);
+      } else {
+        await apiService.createUser(formData);
+      }
       await fetchUsers();
       setShowModal(false);
       setSelectedUser(null);
       setFormData({ name: '', email: '', role: 'user' });
     } catch (err) {
-      setError(err.message);
+      setError(err.message || `Failed to ${selectedUser ? 'update' : 'create'} user`);
     }
   };
 
   const handleDelete = async () => {
     try {
-      const response = await fetch(`/api/users/${selectedUser.id}`, {
-        method: 'DELETE'
-      });
-      
-      if (!response.ok) throw new Error('Failed to delete user');
-      
+      await apiService.deleteUser(selectedUser.id);
       await fetchUsers();
       setShowDeleteModal(false);
       setSelectedUser(null);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Failed to delete user');
     }
   };
 

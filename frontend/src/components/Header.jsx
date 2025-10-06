@@ -31,6 +31,10 @@ const Header = ({ user, onLogout }) => {
         </h1>
       </div>
       <div className="flex items-center space-x-4">
+        {/* Version badge for diagnostics; remove once validated */}
+        <div className="text-xs text-gray-400 hidden md:block" title="Build stamp">
+          Build: {import.meta.env.VITE_BUILD_STAMP || 'dev'}
+        </div>
         <div className="text-sm text-gray-600 hidden md:block">
           Welcome,{" "}
           <span className="font-medium">
