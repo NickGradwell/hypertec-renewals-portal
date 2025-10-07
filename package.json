@@ -7,7 +7,9 @@
     "start:local": "node local-api-server.js",
     "switch:sqlite": "node switch-database.js sqlite",
     "switch:mysql": "node switch-database.js mysql-local",
-    "switch:production": "node switch-database.js mysql-production"
+    "switch:production": "node switch-database.js mysql-production",
+    "phones:dryrun": "node normalize-uk-phones.js",
+    "phones:apply": "node normalize-uk-phones.js --apply"
   },
   "dependencies": {
     "@azure/identity": "^4.12.0",

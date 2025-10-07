@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiService } from '../services/apiService';
 import { 
   Table, 
   Card, 
@@ -47,10 +48,8 @@ const CompanyManagement = () => {
   const fetchCompanies = async () => {
     try {
       setLoading(true);
-      // Use the API service which handles the correct base URL
-      const { apiService } = await import('../services/apiService');
       const data = await apiService.getCompanies();
-      setCompanies(data.data || []);
+      setCompanies(Array.isArray(data?.data) ? data.data : []);
     } catch (err) {
       console.error('Error fetching companies:', err);
       setError('Failed to fetch companies');
@@ -62,39 +61,28 @@ const CompanyManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const url = selectedCompany ? `/api/companies/${selectedCompany.id}` : '/api/companies';
-      const method = selectedCompany ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-
-      if (!response.ok) throw new Error(`Failed to ${selectedCompany ? 'update' : 'create'} company`);
-      
+      if (selectedCompany) {
+        await apiService.updateCompany(selectedCompany.id, formData);
+      } else {
+        await apiService.createCompany(formData);
+      }
       await fetchCompanies();
       setShowModal(false);
       setSelectedCompany(null);
       setFormData({ name: '', contactEmail: '', contactPhone: '', address: '' });
     } catch (err) {
-      setError(err.message);
+      setError(err.message || `Failed to ${selectedCompany ? 'update' : 'create'} company`);
     }
   };
 
   const handleDelete = async () => {
     try {
-      const response = await fetch(`/api/companies/${selectedCompany.id}`, {
-        method: 'DELETE'
-      });
-      
-      if (!response.ok) throw new Error('Failed to delete company');
-      
+      await apiService.deleteCompany(selectedCompany.id);
       await fetchCompanies();
       setShowDeleteModal(false);
       setSelectedCompany(null);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Failed to delete company');
     }
   };
 
