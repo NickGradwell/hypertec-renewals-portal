@@ -11,6 +11,9 @@ CREATE TABLE IF NOT EXISTS companies (
     name VARCHAR(255) NOT NULL,
     type ENUM('Partner', 'Customer', 'Admin') NOT NULL,
     resellerEmail VARCHAR(255),
+    contactEmail VARCHAR(255),
+    contactPhone VARCHAR(64),
+    address TEXT,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
