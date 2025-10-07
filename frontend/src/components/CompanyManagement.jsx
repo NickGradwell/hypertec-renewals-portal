@@ -36,9 +36,7 @@ const CompanyManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
     name: '',
-    contactEmail: '',
-    contactPhone: '',
-    address: ''
+    contactEmail: ''
   });
 
   useEffect(() => {
@@ -90,27 +88,22 @@ const CompanyManagement = () => {
     setSelectedCompany(company);
     setFormData({
       name: company.name,
-      contactEmail: company.contactEmail || '',
-      contactPhone: company.contactPhone || '',
-      address: company.address || ''
+      contactEmail: company.resellerEmail || ''
     });
     setShowModal(true);
   };
 
   const handleAddNew = () => {
     setSelectedCompany(null);
-    setFormData({ name: '', contactEmail: '', contactPhone: '', address: '' });
+    setFormData({ name: '', contactEmail: '' });
     setShowModal(true);
   };
 
   const getContactBadge = (company) => {
-    const hasEmail = company.contactEmail;
-    const hasPhone = company.contactPhone;
-    
-    if (hasEmail && hasPhone) {
+    const hasEmail = company.resellerEmail;
+
+    if (hasEmail) {
       return <Badge bg="success">Complete</Badge>;
-    } else if (hasEmail || hasPhone) {
-      return <Badge bg="warning">Partial</Badge>;
     } else {
       return <Badge bg="danger">Missing</Badge>;
     }
@@ -118,8 +111,7 @@ const CompanyManagement = () => {
 
   const filteredCompanies = companies.filter(company => {
     const matchesSearch = company.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         company.contactEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         company.contactPhone?.toLowerCase().includes(searchTerm.toLowerCase());
+                         company.resellerEmail?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
 
@@ -181,19 +173,18 @@ const CompanyManagement = () => {
         <Card.Body className="p-0">
           <Table responsive hover className="mb-0">
             <thead className="table-light">
-              <tr>
-                <th>Company</th>
-                <th>Contact Email</th>
-                <th>Contact Phone</th>
-                <th>Contact Info</th>
-                <th>Created</th>
-                <th>Actions</th>
-              </tr>
+                     <tr>
+                       <th>Company</th>
+                       <th>Contact Email</th>
+                       <th>Contact Info</th>
+                       <th>Created</th>
+                       <th>Actions</th>
+                     </tr>
             </thead>
             <tbody>
               {filteredCompanies.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-4 text-muted">
+                  <td colSpan={5} className="text-center py-4 text-muted">
                     No companies found
                   </td>
                 </tr>
@@ -209,20 +200,10 @@ const CompanyManagement = () => {
                       </div>
                     </td>
                     <td>
-                      {company.contactEmail ? (
+                      {company.resellerEmail ? (
                         <div className="d-flex align-items-center">
                           <Mail size={14} className="text-muted me-1" />
-                          {company.contactEmail}
-                        </div>
-                      ) : (
-                        <span className="text-muted">Not provided</span>
-                      )}
-                    </td>
-                    <td>
-                      {company.contactPhone ? (
-                        <div className="d-flex align-items-center">
-                          <Phone size={14} className="text-muted me-1" />
-                          {company.contactPhone}
+                          {company.resellerEmail}
                         </div>
                       ) : (
                         <span className="text-muted">Not provided</span>
@@ -272,57 +253,27 @@ const CompanyManagement = () => {
           </Modal.Title>
         </Modal.Header>
         <Form onSubmit={handleSubmit}>
-          <Modal.Body>
-            <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Company Name</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Enter company name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Contact Email</Form.Label>
-                  <Form.Control
-                    type="email"
-                    placeholder="Enter contact email"
-                    value={formData.contactEmail}
-                    onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-            <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Contact Phone</Form.Label>
-                  <Form.Control
-                    type="tel"
-                    placeholder="Enter contact phone"
-                    value={formData.contactPhone}
-                    onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
-                  />
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Address</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Enter company address"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-          </Modal.Body>
+                <Modal.Body>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Company Name</Form.Label>
+                    <Form.Control
+                      type="text"
+                      placeholder="Enter company name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      required
+                    />
+                  </Form.Group>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Contact Email</Form.Label>
+                    <Form.Control
+                      type="email"
+                      placeholder="Enter contact email"
+                      value={formData.contactEmail}
+                      onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
+                    />
+                  </Form.Group>
+                </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={() => setShowModal(false)}>
               Cancel
@@ -341,11 +292,10 @@ const CompanyManagement = () => {
         </Modal.Header>
         <Modal.Body>
           <p>Are you sure you want to delete this company?</p>
-          <div className="bg-light p-3 rounded">
-            <strong>Name:</strong> {selectedCompany?.name}<br />
-            <strong>Email:</strong> {selectedCompany?.contactEmail || 'Not provided'}<br />
-            <strong>Phone:</strong> {selectedCompany?.contactPhone || 'Not provided'}
-          </div>
+                <div className="bg-light p-3 rounded">
+                  <strong>Name:</strong> {selectedCompany?.name}<br />
+                  <strong>Email:</strong> {selectedCompany?.resellerEmail || 'Not provided'}
+                </div>
           <Alert variant="warning" className="mt-3">
             <strong>Warning:</strong> This action cannot be undone and may affect related renewal records.
           </Alert>

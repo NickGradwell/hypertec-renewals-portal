@@ -182,18 +182,18 @@ app.get('/api/companies', async (req, res) => {
 // Create company
 app.post('/api/companies', async (req, res) => {
     try {
-        const { name, contactEmail, contactPhone, address } = req.body;
+        const { name, contactEmail } = req.body;
         const connection = await getConnection();
         
         const [result] = await connection.execute(
-            'INSERT INTO companies (id, name, type, resellerEmail, phone, address, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())',
-            [`comp-${Date.now()}`, name, 'Customer', contactEmail, contactPhone, address]
+            'INSERT INTO companies (id, name, type, resellerEmail, createdAt, updatedAt) VALUES (?, ?, ?, ?, NOW(), NOW())',
+            [`comp-${Date.now()}`, name, 'Customer', contactEmail]
         );
         await connection.end();
         
         res.json({
             success: true,
-            data: { id: `comp-${Date.now()}`, name, contactEmail, contactPhone, address }
+            data: { id: `comp-${Date.now()}`, name, contactEmail }
         });
     } catch (error) {
         console.error('Database error:', error);
@@ -209,18 +209,18 @@ app.post('/api/companies', async (req, res) => {
 app.put('/api/companies/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, contactEmail, contactPhone, address } = req.body;
+        const { name, contactEmail } = req.body;
         const connection = await getConnection();
         
         await connection.execute(
-            'UPDATE companies SET name = ?, resellerEmail = ?, phone = ?, address = ?, updatedAt = NOW() WHERE id = ?',
-            [name, contactEmail, contactPhone, address, id]
+            'UPDATE companies SET name = ?, resellerEmail = ?, updatedAt = NOW() WHERE id = ?',
+            [name, contactEmail, id]
         );
         await connection.end();
         
         res.json({
             success: true,
-            data: { id, name, contactEmail, contactPhone, address }
+            data: { id, name, contactEmail }
         });
     } catch (error) {
         console.error('Database error:', error);
